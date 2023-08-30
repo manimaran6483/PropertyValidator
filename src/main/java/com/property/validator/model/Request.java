@@ -1,0 +1,47 @@
+package com.property.validator.model;
+
+public class Request {
+
+	private String rootFolder;
+	private String referenceFileName;
+	private String targetFileName;
+	
+	public Request() {
+		super();
+	}
+	
+	public Request(String rootFolder, String referenceFileName, String targetFileName) {
+		super();
+		this.rootFolder = rootFolder;
+		this.referenceFileName = referenceFileName;
+		this.targetFileName = targetFileName;
+	}
+	
+	@Override
+	public String toString() {
+		return "Request [rootFolder=" + rootFolder + ", referenceFileName=" + referenceFileName + ", targetFileName="
+				+ targetFileName + "]";
+	}
+	
+	public String getRootFolder() {
+		return rootFolder;
+	}
+	public void setRootFolder(String rootFolder) {
+		this.rootFolder = rootFolder;
+	}
+	public String getReferenceFileName() {
+		return referenceFileName;
+	}
+	public void setReferenceFileName(String referenceFileName) {
+		this.referenceFileName = referenceFileName;
+	}
+	public String getTargetFileName() {
+		return targetFileName;
+	}
+	public void setTargetFileName(String targetFileName) {
+		this.targetFileName = targetFileName;
+	}
+	
+	
+	
+}
