@@ -4,23 +4,20 @@ public class Request {
 
 	private String rootFolder;
 	private String referenceFileName;
-	private String targetFileName;
 	
 	public Request() {
 		super();
 	}
 	
-	public Request(String rootFolder, String referenceFileName, String targetFileName) {
+	public Request(String rootFolder, String referenceFileName) {
 		super();
 		this.rootFolder = rootFolder;
 		this.referenceFileName = referenceFileName;
-		this.targetFileName = targetFileName;
 	}
 	
 	@Override
 	public String toString() {
-		return "Request [rootFolder=" + rootFolder + ", referenceFileName=" + referenceFileName + ", targetFileName="
-				+ targetFileName + "]";
+		return "Request [rootFolder=" + rootFolder + ", referenceFileName=" + referenceFileName + "]";
 	}
 	
 	public String getRootFolder() {
@@ -35,13 +32,6 @@ public class Request {
 	public void setReferenceFileName(String referenceFileName) {
 		this.referenceFileName = referenceFileName;
 	}
-	public String getTargetFileName() {
-		return targetFileName;
-	}
-	public void setTargetFileName(String targetFileName) {
-		this.targetFileName = targetFileName;
-	}
-	
 	
 	
 }

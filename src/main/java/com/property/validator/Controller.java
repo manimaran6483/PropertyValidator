@@ -23,11 +23,8 @@ import com.property.validator.service.ValidateService;
 @RestController
 public class Controller {
 
-	/*@Autowired
-	private ValidateService validateService;*/
-	
-	@Value("${snowflake.url}")
-	private String url;
+	@Autowired
+	private ValidateService validateService;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Controller.class);
 	
@@ -53,7 +50,7 @@ public class Controller {
 	}*/
 	
 	
-	public void validateProperties(@RequestBody Request request) {
+	public void validateProperties(Request request) {
 		LOGGER.debug("Controller - Entering validateProperties");
 		try{
 			ObjectMapper mapper = new ObjectMapper();
@@ -65,8 +62,9 @@ public class Controller {
 			}
 			LOGGER.debug("Controller - Exiting validateProperties");
 			ValidateService validateService = new ValidateService();
-			System.out.println(mapper.writeValueAsString(validateService.validate(request)));
-			
+			res = validateService.validate(request);
+			System.out.println(mapper.writeValueAsString(res));
+			System.exit(Integer.parseInt(res.getStatus()));
 		}catch(Exception e){
 			LOGGER.error(e.getMessage());
 		}
@@ -84,18 +82,8 @@ public class Controller {
 			return new Response("Reference File Name is not sent in request","1");
 		} else if (!Constants.envList.contains(request.getReferenceFileName())) {
 			return new Response("Invalid Reference File Name is sent in request","1");
-		} else if (StringUtils.isBlank(request.getTargetFileName())) {
-			return new Response("Target File Name is not sent in request","1");
-		} else if (request.getReferenceFileName().equalsIgnoreCase(request.getTargetFileName())) {
-			return new Response("Both Reference and Target file are same","1");
-		} else if (!Constants.envList.contains(request.getTargetFileName())
-				&& !request.getTargetFileName().equalsIgnoreCase("all")) {
-			return new Response("Invalid Target File Name is sent in request","1");
 		}
 		request.setReferenceFileName(request.getReferenceFileName()+Constants.DOT_PROPERTIES);
-		if(!request.getTargetFileName().equalsIgnoreCase("all")){
-			request.setTargetFileName(request.getTargetFileName()+Constants.DOT_PROPERTIES);
-		}
 		
 		LOGGER.debug("Controller - Exiting validateRequest");
 		

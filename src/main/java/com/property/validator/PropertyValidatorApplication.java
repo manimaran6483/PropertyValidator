@@ -10,12 +10,11 @@ public class PropertyValidatorApplication {
 
 	public static void main(String[] args) {
 		//SpringApplication.run(PropertyValidatorApplication.class, args);
-		
+		System.out.println(args.toString());
 		Controller cntlr = new Controller();
 		Request request = new Request();
 		request.setRootFolder(args[0]);
 		request.setReferenceFileName(args[1]);
-		request.setTargetFileName(args[2]);
 		cntlr.validateProperties(request);
 	}
 

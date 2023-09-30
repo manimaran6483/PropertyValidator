@@ -1,5 +1,6 @@
 package com.property.validator.service;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -28,7 +29,6 @@ public class ValidateService {
 
 		LOGGER.debug("ValidateService - Entering validate method");
 		
-		String targetFileName = request.getTargetFileName();
 		String rootPath = request.getRootFolder();
 		String referenceFile = request.getReferenceFileName().substring(0, request.getReferenceFileName().lastIndexOf("."));
 		
@@ -38,37 +38,26 @@ public class ValidateService {
 
 		Set<Object> referencePropKeys = getKeys(request.getRootFolder(),request.getReferenceFileName()); // 15 properties
 		boolean invalid = false;
-		if(!targetFileName.equalsIgnoreCase("all")){
-			
-			Record rec = validateProps(referencePropKeys,rootPath, targetFileName);
-			response.getDifferences().add(rec);
-			if(rec.getMissingProperties().isEmpty()){
-				response.setMessage(targetFileName + " is up to date. No differences found");
-				response.setStatus("0");
-			}else{
-				response.setMessage(targetFileName + " is not up to date.");
-				response.setStatus("1");
-			}
-		}else{
-			for(String file : Constants.envList){
-				if(!referenceFile.equalsIgnoreCase(file)){
-					Set<Object> referencePropKeysCopy = new HashSet<>();
-					referencePropKeysCopy.addAll(referencePropKeys);
-					Record rec = validateProps(referencePropKeysCopy,rootPath, file+Constants.DOT_PROPERTIES);
-					response.getDifferences().add(rec);
-					if(!rec.getMissingProperties().isEmpty())
-						invalid = true;
-				}
-			}
-			String folderName = getFolderName(rootPath);
-			if(invalid){
-				response.setMessage(folderName + " Service is not up to date.");
-				response.setStatus("1");
-			}else{
-				response.setMessage(folderName + " Service is up to date. No differences found");
-				response.setStatus("0");
+
+		for (String file : Constants.envList) {
+			if (!referenceFile.equalsIgnoreCase(file)) {
+				Set<Object> referencePropKeysCopy = new HashSet<>();
+				referencePropKeysCopy.addAll(referencePropKeys);
+				Record rec = validateProps(referencePropKeysCopy, rootPath, file + Constants.DOT_PROPERTIES);
+				response.getDifferences().add(rec);
+				if (!rec.getMissingProperties().isEmpty())
+					invalid = true;
 			}
 		}
+		String folderName = getFolderName(rootPath);
+		if (invalid) {
+			response.setMessage(folderName + " Service is not up to date.");
+			response.setStatus("1");
+		} else {
+			response.setMessage(folderName + " Service is up to date. No differences found");
+			response.setStatus("0");
+		}
+		
 		LOGGER.debug("ValidateService - Exiting validate method");
 		return response;
 		
@@ -103,7 +92,8 @@ public class ValidateService {
 		try {
 			propeties = new Properties();
 			
-			is = new FileInputStream(new StringBuffer().append(rootPath).append(fileName).toString());
+			//is = new FileInputStream(new StringBuffer().append(rootPath).append(fileName).toString());
+			is = new FileInputStream(new File(new StringBuffer().append(rootPath).append(fileName).toString()));
 
 			propeties.load(is);
 			
