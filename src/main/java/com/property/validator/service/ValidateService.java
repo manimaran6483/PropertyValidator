@@ -49,8 +49,10 @@ public class ValidateService {
 						invalid = true;
 				}else {
 					Record record = new Record();
-					record.setFileName(file + Constants.DOT_PROPERTIES + " not present in GIT");
+					record.setFileName(file + Constants.DOT_PROPERTIES + " not present in GIT config folder.");
 					record.setMissingProperties(new ArrayList<String>());
+					response.getDifferences().add(record);
+					invalid = true;
 				}
 			}
 		}
