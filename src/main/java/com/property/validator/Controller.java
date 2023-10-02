@@ -51,19 +51,22 @@ public class Controller {
 	
 	
 	public void validateProperties(Request request) {
-		LOGGER.debug("Controller - Entering validateProperties");
 		try{
 			ObjectMapper mapper = new ObjectMapper();
 			Response res = null;
 			res = validateRequest(request);
+			System.out.println("******************************************REQUEST******************************************");
+			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(request));
+			
 			if (res.getStatus().equalsIgnoreCase("1")) {
 				LOGGER.debug("Controller - BAD REQUEST");
-				System.out.println(mapper.writeValueAsString(res));
+				System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(res));
 			}
-			LOGGER.debug("Controller - Exiting validateProperties");
 			ValidateService validateService = new ValidateService();
 			res = validateService.validate(request);
-			System.out.println(mapper.writeValueAsString(res));
+			
+			System.out.println("******************************************RESPONSE******************************************");
+			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(res));
 			System.exit(Integer.parseInt(res.getStatus()));
 		}catch(Exception e){
 			LOGGER.error(e.getMessage());
@@ -71,7 +74,6 @@ public class Controller {
 	}
 
 	private Response validateRequest(Request request){
-		LOGGER.debug("Controller - Entering validateRequest");
 		if(request == null){
 			return new Response("Request is empty","1");
 		}else if (StringUtils.isBlank(request.getRootFolder())) {
@@ -84,8 +86,6 @@ public class Controller {
 			return new Response("Invalid Reference File Name is sent in request","1");
 		}
 		request.setReferenceFileName(request.getReferenceFileName()+Constants.DOT_PROPERTIES);
-		
-		LOGGER.debug("Controller - Exiting validateRequest");
 		
 		return new Response("","0");
 

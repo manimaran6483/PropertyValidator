@@ -27,8 +27,6 @@ public class ValidateService {
 	
 	public Response validate(Request request) {
 
-		LOGGER.debug("ValidateService - Entering validate method");
-		
 		String rootPath = request.getRootFolder();
 		String referenceFile = request.getReferenceFileName().substring(0, request.getReferenceFileName().lastIndexOf("."));
 		
@@ -41,32 +39,38 @@ public class ValidateService {
 
 		for (String file : Constants.envList) {
 			if (!referenceFile.equalsIgnoreCase(file)) {
-				Set<Object> referencePropKeysCopy = new HashSet<>();
-				referencePropKeysCopy.addAll(referencePropKeys);
-				Record rec = validateProps(referencePropKeysCopy, rootPath, file + Constants.DOT_PROPERTIES);
-				response.getDifferences().add(rec);
-				if (!rec.getMissingProperties().isEmpty())
-					invalid = true;
+				File tempFile = new File(rootPath+ file + Constants.DOT_PROPERTIES);
+				if(tempFile.exists()) {
+					Set<Object> referencePropKeysCopy = new HashSet<>();
+					referencePropKeysCopy.addAll(referencePropKeys);
+					Record rec = validateProps(referencePropKeysCopy, rootPath, file + Constants.DOT_PROPERTIES);
+					response.getDifferences().add(rec);
+					if (!rec.getMissingProperties().isEmpty())
+						invalid = true;
+				}else {
+					Record record = new Record();
+					record.setFileName(file + Constants.DOT_PROPERTIES + " not present in GIT");
+					record.setMissingProperties(new ArrayList<String>());
+				}
 			}
 		}
-		String folderName = getFolderName(rootPath);
+		//String folderName = getFolderName(rootPath);
 		if (invalid) {
-			response.setMessage(folderName + " Service is not up to date.");
+			response.setMessage(" Service is not up to date.");
 			response.setStatus("1");
 		} else {
-			response.setMessage(folderName + " Service is up to date. No differences found");
+			response.setMessage(" Service is up to date. No differences found");
 			response.setStatus("0");
 		}
 		
-		LOGGER.debug("ValidateService - Exiting validate method");
 		return response;
 		
 	}
 
-	private String getFolderName(String rootPath) {
-		rootPath = rootPath.substring(0, rootPath.length()-1);
-		return rootPath.substring(rootPath.lastIndexOf("\\")+1, rootPath.length());
-	}
+//	private String getFolderName(String rootPath) {
+//		rootPath = rootPath.substring(0, rootPath.length()-1);
+//		return rootPath.substring(rootPath.lastIndexOf("\\")+1, rootPath.length());
+//	}
 
 	private Record validateProps(Set<Object> referencePropKeys, String rootPath, String targetFileName) {
 		List<String> diffList = new ArrayList<String>();
