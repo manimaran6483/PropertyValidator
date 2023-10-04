@@ -23,6 +23,7 @@ import com.property.validator.service.ValidateService;
 @RestController
 public class Controller {
 
+	
 	@Autowired
 	private ValidateService validateService;
 
