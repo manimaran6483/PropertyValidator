@@ -9,7 +9,9 @@ import com.property.validator.model.Request;
 public class PropertyValidatorApplication {
 
 	public static void main(String[] args) {
+		
 		//SpringApplication.run(PropertyValidatorApplication.class, args);
+		
 		Controller cntlr = new Controller();
 		Request request = new Request();
 		request.setRootFolder(args[0]);

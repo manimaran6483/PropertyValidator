@@ -8,9 +8,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,77 +30,139 @@ public class ValidateService {
 	public Response validate(Request request) {
 
 		String rootPath = request.getRootFolder();
-		String referenceFile = request.getReferenceFileName().substring(0, request.getReferenceFileName().lastIndexOf("."));
+		
+		String referenceFile = request.getReferenceFileName();
 		
 		Response response = new Response();
-		List<Record> recordList = new ArrayList<>();
-		response.setDifferences(recordList);
-
-		Set<Object> referencePropKeys = getKeys(request.getRootFolder(),request.getReferenceFileName()); // 15 properties
+		response.setStatus("0");
+		
+		Set<Object> referenceKeysSet = null;
 		boolean invalid = false;
-
-		for (String file : Constants.envList) {
-			if (!referenceFile.equalsIgnoreCase(file)) {
-				File tempFile = new File(rootPath+ file + Constants.DOT_PROPERTIES);
-				if(tempFile.exists()) {
-					Set<Object> referencePropKeysCopy = new HashSet<>();
-					referencePropKeysCopy.addAll(referencePropKeys);
-					Record rec = validateProps(referencePropKeysCopy, rootPath, file + Constants.DOT_PROPERTIES);
-					response.getDifferences().add(rec);
-					if (!rec.getMissingProperties().isEmpty())
-						invalid = true;
-				}else {
-					Record record = new Record();
-					record.setFileName(file + Constants.DOT_PROPERTIES + " not present in GIT config folder.");
-					record.setMissingProperties(new ArrayList<String>());
-					response.getDifferences().add(record);
-					invalid = true;
-				}
+		
+		try {
+			Properties referenceProps = getKeys(rootPath, referenceFile+ Constants.DOT_PROPERTIES); //opstest.properties
+			
+			if(referenceProps != null) {
+				
+				referenceKeysSet = referenceProps.keySet();
+				
+			}else {
+				
+				Record record = new Record();
+				record.setFileName("Exception Occured while reading " + referenceFile + Constants.DOT_PROPERTIES);
+				response.getDifferences().add(record);
+				invalid = true;
+				
 			}
-		}
-		//String folderName = getFolderName(rootPath);
-		if (invalid) {
-			response.setMessage(" Service is not up to date.");
-			response.setStatus("1");
-		} else {
-			response.setMessage(" Service is up to date. No differences found");
-			response.setStatus("0");
+			
+			if(referenceKeysSet != null && !referenceKeysSet.isEmpty()) {
+				
+				for (String file : Constants.envList) {
+					
+						File tempFile = new File(rootPath+ file + Constants.DOT_PROPERTIES);
+						if(tempFile.exists()) {
+							
+							Set<Object> referencePropKeysCopy = new HashSet<>();
+							referencePropKeysCopy.addAll(referenceKeysSet);
+							
+							Record rec = validateFile(referencePropKeysCopy, rootPath, file + Constants.DOT_PROPERTIES);
+							
+							if (!rec.getMissingKeys().isEmpty()) {
+								//updateFile(rec, rootPath, file + Constants.DOT_PROPERTIES);
+								invalid = true;
+								response.getDifferences().add(rec);
+								rec.setFileName("Warning!!! "+ file + Constants.DOT_PROPERTIES + " is missing some keys.");
+							}
+							
+							if(!rec.getMissingValues().isEmpty()) {
+								invalid = true;
+								
+								if(response.getDifferences().stream().filter(e-> e.getFileName().contains(file)).count() > 0){
+									rec.setFileName("Warning!!! "+ file + Constants.DOT_PROPERTIES + " is missing some keys and has empty values");
+								}else {
+									response.getDifferences().add(rec);
+									rec.setFileName("Warning!!! "+ file + Constants.DOT_PROPERTIES + " has empty values for some keys.");
+								}
+							}
+							
+							
+						}else {
+							
+							Record record = new Record();
+							record.setFileName(file + Constants.DOT_PROPERTIES + " not present in GIT config folder.");
+							response.getDifferences().add(record);
+							
+							invalid = true;
+							
+						}
+					
+				}
+				
+			}
+			
+			if (invalid) {
+				response.setMessage("Config is not up to date.");
+				response.setStatus("1");
+			} else {
+				response.setMessage("Config is up to date.");
+			}
+		}catch (Exception e) {
+			LOGGER.error(e.getMessage());
 		}
 		
 		return response;
 		
 	}
 
-//	private String getFolderName(String rootPath) {
-//		rootPath = rootPath.substring(0, rootPath.length()-1);
-//		return rootPath.substring(rootPath.lastIndexOf("\\")+1, rootPath.length());
-//	}
 
-	private Record validateProps(Set<Object> referencePropKeys, String rootPath, String targetFileName) {
-		List<String> diffList = new ArrayList<String>();
-		
-		Set<Object> targetPropKeys = getKeys(rootPath,targetFileName); // 14 properties 
-		
-		referencePropKeys.removeAll(targetPropKeys);
-		
-		for(Object k : referencePropKeys){
-            String key = (String)k;
-            diffList.add(key);
-        }
+	private Record validateFile(Set<Object> referencePropKeys, String rootPath, String targetFileName) {
+		List<String> keyList = new ArrayList<String>();
+		List<String> valueList = new ArrayList<String>();
 		
 		Record record = new Record();
-		record.setFileName(targetFileName);
-		record.setMissingProperties(diffList);
+		record.setMissingKeys(keyList);
+		record.setMissingValues(valueList);
+		
+		try {
+			
+			Properties targetProps = getKeys(rootPath,targetFileName);
+			
+			if(targetProps != null) {
+				
+				referencePropKeys.removeAll(targetProps.keySet());
+				
+				for(Object k : referencePropKeys){
+		            String key = (String)k;
+		            keyList.add(key);
+		        }
+				record.setFileName(targetFileName);
+				
+				
+				for(Entry<Object,Object> entry: targetProps.entrySet()) {
+					if(StringUtils.isBlank((String) entry.getValue())) {
+						valueList.add((String) entry.getKey());
+					}
+				}
+				
+			}else {
+				record.setFileName("Exception Occured while reading " + targetFileName + Constants.DOT_PROPERTIES);
+			}
+			
+		}catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+		
 		return record;
 	}
 
-	private Set<Object> getKeys(String rootPath, String fileName){
+	private Properties getKeys(String rootPath, String fileName){
+		
 		InputStream is = null;
 		Properties propeties = null;
+		
 		try {
 			propeties = new Properties();
 			
-			//is = new FileInputStream(new StringBuffer().append(rootPath).append(fileName).toString());
 			is = new FileInputStream(new File(new StringBuffer().append(rootPath).append(fileName).toString()));
 
 			propeties.load(is);
@@ -106,11 +170,14 @@ public class ValidateService {
 			is.close();
 
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			LOGGER.error(e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 		}
 		
-		return propeties.keySet();
+		return propeties;
 	}
+
 }
